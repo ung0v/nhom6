@@ -104,10 +104,20 @@ class Home extends BaseController
 		if (isset($_GET['classID'])) {
 			$classID = $_GET['classID'];
 			// $subjectID  = $_GET['subjectID'];
-			$students = $studentModel->getStudentByClassID($classID);
+			$students = $studentModel->getAll();
+			$studentbyClass = [];
 			foreach ($students as $key => $value) {
-				$students[$key]['className'] = $classesModel->getById($classID)[0]['name'];
-				$students[$key]['grade'] = $markModel->getMarkByStudentIDAndSubID($value['id'], $classID)[0]['grade'];
+				$classIDS = unserialize($value["classID"]);
+				if (is_array($classIDS)) {
+					foreach ($classIDS as $item) {
+						if ($item == $classID) {
+							$value['className'] = $classesModel->getById($classID)[0]['name'];
+							$grade = $markModel->getMarkByStudentIDAndSubID($value['id'], $classID)[0]['grade'];
+							$value['grade'] = $grade != null ? $grade : "--";
+							array_push($studentbyClass, $value);
+						}
+					}
+				}
 			}
 			$data['currentClass'] = $classesModel->getById($classID)[0]['name'];
 
@@ -115,7 +125,8 @@ class Home extends BaseController
 
 			// var_dump($students);
 		}
-		$data['students'] = $students;
+		// var_dump($studentbyClass, count($studentbyClass));
+		$data['students'] = $studentbyClass;
 		return view('classes', $data);
 	}
 	public function editMark()
@@ -150,7 +161,7 @@ class Home extends BaseController
 
 				$newMark = $markModel->save($data_insert);
 				if ($newMark > 0) {
-					return redirect()->to(base_url() . '/home/classes');
+					return redirect()->to(base_url() . '/home/classes?classID=' . $classID);
 				} else {
 					echo '<script>alert("Đã xảy ra lỗi!!!");</script>';
 				}
@@ -227,7 +238,6 @@ class Home extends BaseController
 					'modifiedDate' => date("Y-m-d h:i:s"),
 				];
 			}
-			var_dump($data_insert);
 			$newClass = $classesModel->save($data_insert);
 			if ($newClass > 0) {
 				return redirect()->to(base_url() . '/home/class');
@@ -749,7 +759,6 @@ class Home extends BaseController
 	{
 		if ($this->request->getMethod() == 'post') {
 			$role = $this->request->getVar('role');
-			var_dump(1111111111111111);
 
 			if (isset($_GET['id'])) {
 				$id = $_GET['id'];
@@ -778,7 +787,8 @@ class Home extends BaseController
 		if (is_array($subIDS)) {
 			foreach ($subIDS as $key => $value) {
 				$subName = $subjectModel->getSubjectById($value)[0]['name'];
-				$subjects[$key] = $subName;
+				$subjects[$key]["id"] = $value;
+				$subjects[$key]["subName"] = $subName;
 			}
 		}
 		$json = json_encode($subjects);

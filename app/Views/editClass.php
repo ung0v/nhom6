@@ -28,7 +28,7 @@
     <?php if (isset($subjects)) : ?>
         <div class=" form-group">
             <label class="bold">Môn</label>
-            <select id="teacher" class="form-control first_null not_chosen" name="subject">
+            <select id="teacher" class="form-control first_null not_chosen" name="subID">
                 <option value="0">--- Chọn môn ---</option>
             </select>
         </div>
@@ -52,7 +52,7 @@
         const res = await fetch(`http://localhost/nhom6/home/getTeacherBySubject/${value}`);
         const data = await res.json();
         let html = data.map(el => {
-            return `<option value="">${el}</option>`
+            return `<option value="${el.id}">${el.subName}</option>`
         })
         if (!data.length) {
 
