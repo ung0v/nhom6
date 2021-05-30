@@ -4,7 +4,7 @@
 
     <?php if ($message == "fail") : ?>
         <div class="alert alert-danger">
-            <strong>Tạo tài khoản không thành công !</strong> Đã xảy ra lỗi!!!
+            <strong>Không thành công !</strong> Đã xảy ra lỗi!!!
             <?php if ($error) : ?>
                 <?php foreach ($error as $item) : ?>
                     <li><?= $item ?></li>
@@ -35,7 +35,7 @@
         <div class="form-group">
             <input type="email" class="form-control form-control-user" id="email" name="email" placeholder="Địa chỉ Email" value="<?= $student['email'] ?>">
         </div>
-
+<!-- 
         <div class=" form-group">
             <label class="bold">Lớp</label>
             <select class="form-control first_null not_chosen" name="classID">
@@ -46,8 +46,23 @@
                     <?php endforeach; ?>
                 <?php endif; ?>
             </select>
-        </div>
-
+        </div> -->        
+        <?php if (isset($classes)) : ?>
+            <div class="form-group col-md-3">
+                <?php foreach ($classes as $item) : ?>
+                    <input type="checkbox" class="checkbox" id="<?= $item['name'] ?>" name="classID[]" value="<?= $item['id'] ?>" <?php 
+                        if (is_array($student['class'])) {
+                            foreach($student['class'] as $classID) {
+                                if ($item['id'] == $classID) {
+                                    echo "checked";
+                                }
+                            }
+                        }
+                        ?>>
+                    <label for="<?= $item['name'] ?>"><?= $item['name'] ?></label><br>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
         <div class=" form-group">
             <label class="bold">Giới tính</label>
             <select class="form-control first_null not_chosen" name="gender">
@@ -60,7 +75,7 @@
         </div>
         <div class="form-group">
             <label class="bold">Ngày Sinh</label>
-            <input type="date" class="form-control" name="birthday">
+            <input type="date" class="form-control" name="birthday" value="<?= date('Y-m-d', strtotime($student['birthday']))?>">
         </div>
         <div class="form-group">
             <input type="phone" class="form-control" name="phonenumber" placeholder="Số điện thoại" value="<?= $student['phoneNumber'] ?>">

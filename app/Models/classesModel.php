@@ -11,7 +11,7 @@ class ClassesModel extends Model
     protected $primaryKey = 'id';
 
     protected $returnType     = 'array';
-    protected $allowedFields = ['id', 'name', 'code', 'numberStudent', 'createdBy', 'createdDate'];
+    protected $allowedFields = ['id', 'name', 'code', 'numberStudent', 'teacherID', 'subID', 'createdBy', 'createdDate'];
     // protected $createField = '';
     // protected $updatedField = '';
     public function getAll()
@@ -31,5 +31,9 @@ class ClassesModel extends Model
             'teacherID' => $id,
         ];
         return $this->where($condition)->findAll();
+    }
+    public function getByIds($id)
+    {
+        return $this->find($id);
     }
 }

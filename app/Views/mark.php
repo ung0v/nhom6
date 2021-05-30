@@ -16,33 +16,23 @@
                     <tr>
                         <th>STT</th>
                         <th>Mã sinh viên</th>
+                        <th>Họ và tên</th>
                         <th>Môn</th>
-                        <!-- <th>Họ và tên</th> -->
                         <th>Điểm</th>
-                        <th>Ngày vào điểm</th>
+                        <!-- <th>Ngày vào điểm</th> -->
                     </tr>
                 </thead>
-                <tfoot>
-                    <tr>
-                        <th>STT</th>
-                        <th>Mã sinh viên</th>
-                        <th>Môn</th>
-                        <!-- <th>Họ và tên</th> -->
-                        <th>Điểm</th>
-                        <th>Ngày tạo</th>
-                    </tr>
-                </tfoot>
+
                 <tbody>
                     <?php $count = 1; ?>
-                    <?php foreach ($mark as $item) : ?>
+                    <?php foreach ($markAr as $item) : ?>
                         <tr>
                             <td><?= $count ?></td>
-                            <td><?= $item["studentCode"] ?></td>
-
-                            <td><?= $item["subjectName"] ?></td>
-                            <!-- <td><?= $item["studentName"] ?></td> -->
+                            <td><?= $mark[0]["studentCode"] ?></td>
+                            <td><?= $mark[0]["studentName"] ?></td>
+                            <td><?= $item["subName"] ?></td>
                             <td><?= $item['grade'] ?></td>
-                            <td><?= date("d-m-Y", strtotime($item['modifiedDate'])) ?></td>
+                            <!-- <td><?= date("d-m-Y", strtotime($item['modifiedDate'])) ?></td> -->
                         </tr>
                         <?php $count++; ?>
                     <?php endforeach; ?>

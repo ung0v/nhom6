@@ -26,16 +26,30 @@ class Home extends BaseController
 			$markModel = new MarkModel();
 			$studentModel = new StudentModel();
 			$subjectModel = new SubjectModel();
-			$sid = $studentModel->getStudentByCode($maSV)[0]['id'];
+			$classesModel = new ClassesModel();
+			$student = $studentModel->getStudentByCode($maSV)[0];
+			$sid = $student["id"];
+			$markAr = [];
 			if ($sid !== null) {
 				$mark = $markModel->getMarkByStudentID($sid);
-				foreach ($mark as $key => $value) {
-					$mark[$key]['studentName'] = $studentModel->getStudentById($value['studentID'])[0]['name'];
-					$mark[$key]['studentCode'] = $studentModel->getStudentById($value['studentID'])[0]['studentCode'];
-					$mark[$key]['subjectName'] = $subjectModel->getSubjectById($value['subID'])[0]['name'];
+				foreach ($mark as $key1 => $value) {
+					$mark[$key1]['studentName'] = $studentModel->getStudentById($value['studentID'])[0]['name'];
+					$mark[$key1]['studentCode'] = $studentModel->getStudentById($value['studentID'])[0]['studentCode'];
+					$classIDS = unserialize($studentModel->getStudentById($value['studentID'])[0]['classID']);
+					if (is_array($classIDS)) {
+						foreach ($classIDS as $key2 => $classID) {
+							$subID = $classesModel->getById($classID)[0]["subID"];
+							$subName = $subjectModel->getSubjectById($subID)[0]["name"];
+							$grade = $markModel->getMarkByStudentIDAndSubID($sid, $subID)[0]["grade"];
+							$markAr[$key2]["classID"] = $classID;
+							$markAr[$key2]["subID"] = $subID;
+							$markAr[$key2]["subName"] = $subName;
+							$markAr[$key2]["grade"] = $grade != null ? $grade : "--";
+						}
+					}
 				}
 				$data['mark'] = $mark;
-				// print_r($mark);
+				$data['markAr'] = $markAr;
 				return view('mark', $data);
 			}
 			$data['error'] = 'Không tồn tại.';
@@ -173,7 +187,7 @@ class Home extends BaseController
 		$data['classes'] = $classes;
 		return view('class', $data);
 	}
-	public function editClass($classID = null)
+	public function editClass()
 	{
 		$classesModel = new ClassesModel();
 		$adminModel = new AdminModel();
@@ -189,12 +203,16 @@ class Home extends BaseController
 		if ($this->request->getMethod() == 'post') {
 			$code = $this->request->getVar('code');
 			$name = $this->request->getVar('name');
+			$numberStudent = $this->request->getVar('numberStudent');
 			$teacher = $this->request->getVar('teacher');
+			$subID = $this->request->getVar('subID');
 			$checkClass = $classesModel->getById($classID)[0]['id'];
 			if ($classID == null) {
 				$data_insert = [
 					'code' => $code,
 					'name' => $name,
+					'numberStudent' => $numberStudent,
+					'subID' => $subID,
 					'teacherID' => $teacher,
 					'createdDate' => date("Y-m-d h:i:s"),
 				];
@@ -203,10 +221,13 @@ class Home extends BaseController
 					'id' => $checkClass,
 					'code' => $code,
 					'name' => $name,
+					'numberStudent' => $numberStudent,
+					'subID' => $subID,
 					'teacherID' => $teacher,
 					'modifiedDate' => date("Y-m-d h:i:s"),
 				];
 			}
+			var_dump($data_insert);
 			$newClass = $classesModel->save($data_insert);
 			if ($newClass > 0) {
 				return redirect()->to(base_url() . '/home/class');
@@ -534,14 +555,15 @@ class Home extends BaseController
 		if (isset($_GET['id'])) {
 			$studentID = $_GET['id'];
 			$student = $studentModel->getStudentById($studentID);
+			$student[0]["class"] = unserialize($student[0]['classID']);
 			$data['student'] = $student[0];
 		}
 
 		if ($this->request->getMethod() == 'post') {
 			$fullname = $this->request->getVar('fullname');
 			$username = $this->request->getVar('username');
-			$classID = $this->request->getVar('classID');
 			$studentCode = $this->request->getVar('studentCode');
+			$classID = $this->request->getVar('classID');
 			$password = $this->request->getVar('password');
 			$rePassword = $this->request->getVar('rePassword');
 			$gender = $this->request->getVar('gender');
@@ -554,10 +576,40 @@ class Home extends BaseController
 			$data['error'] = [];
 			$checkUsername = $studentModel->where('username', $username)->countAllResults();
 			$checkEmail = $studentModel->where('email', $email)->countAllResults();
+			$checkStudentCode = $studentModel->where('studentCode', $studentCode)->countAllResults();
 			$checkPassword = $password != $rePassword;
 			$txtError = '';
-
-
+			$students = $studentModel->getAll();
+			$tickClass = $classesModel->getByIds($classID);
+			foreach ($tickClass as $key => $item1) {
+				$tickClass[$key]['count'] = 0;
+				foreach ($students as $student) {
+					$classIDS = unserialize($student['classID']);
+					if (is_array($classIDS)) {
+						foreach ($classIDS as $item2) {
+							if ($item2 == $tickClass[$key]["id"]) {
+								$tickClass[$key]['count']++;
+							}
+						}
+					}
+				}
+			}
+			$fullClassAr = [];
+			foreach ($tickClass as $key => $class) {
+				$maxStudent = $classesModel->getById($class["id"])[0]['numberStudent'];
+				if ($class["count"] >= $maxStudent) {
+					$name = $classesModel->getById($class["id"])[0]['name'];
+					array_push($fullClassAr, $name);
+				}
+			}
+			$fullClassName = "";
+			foreach ($fullClassAr as $key => $item) {
+				if ($key == 0) {
+					$fullClassName = $item;
+				} else {
+					$fullClassName = $fullClassName . "," . $item;
+				}
+			}
 			$checkStudent = null;
 			if (isset($_GET['id'])) {
 				$studentID = $_GET['id'];
@@ -569,13 +621,50 @@ class Home extends BaseController
 					'email' => $email,
 					'id!=' => $studentID
 				];
+				$conditionCode = [
+					'studentCode' => $studentCode,
+					'id!=' => $studentID
+				];
 				$checkUsername = $studentModel->where($conditionUsername)->countAllResults();
 				$checkEmail = $studentModel->where($conditionEmail)->countAllResults();
+				$checkStudentCode = $studentModel->where($conditionCode)->countAllResults();
 				$checkStudent = $studentModel->getStudentById($studentID)[0]['id'];
+
+				foreach ($tickClass as $key2 => $item1) {
+					$tickClass[$key2]['count'] = 0;
+					foreach ($students as $student) {
+						if ($student['id'] != $studentID) {
+							$classIDS = unserialize($student['classID']);
+							if (is_array($classIDS)) {
+								foreach ($classIDS as $item2) {
+									if ($item2 == $tickClass[$key2]["id"]) {
+										$tickClass[$key2]['count']++;
+									}
+								}
+							}
+						}
+					}
+				}
+				$fullClassAr = [];
+				foreach ($tickClass as $key => $class) {
+					$maxStudent = $classesModel->getById($class["id"])[0]['numberStudent'];
+					if ($class["count"] >= $maxStudent) {
+						$name = $classesModel->getById($class["id"])[0]['name'];
+						array_push($fullClassAr, $name);
+					}
+				}
+				$fullClassName = "";
+				foreach ($fullClassAr as $key => $item) {
+					if ($key == 0) {
+						$fullClassName = $item;
+					} else {
+						$fullClassName = $fullClassName . "," . $item;
+					}
+				}
 				$data_insert = [
 					'id' => $checkStudent,
 					'name' => $fullname,
-					'classID' => $classID,
+					'classID' => serialize($classID),
 					'studentCode' => $studentCode,
 					'username' => $username,
 					'gender' => $gender,
@@ -590,7 +679,7 @@ class Home extends BaseController
 			} else {
 				$data_insert = [
 					'name' => $fullname,
-					'classID' => $classID,
+					'classID' => serialize($classID),
 					'studentCode' => $studentCode,
 					'username' => $username,
 					'gender' => $gender,
@@ -603,12 +692,8 @@ class Home extends BaseController
 					'status' => 1,
 				];
 			}
-			$count = $studentModel->coutStudentbyClassID($classID);
-			$class = $classesModel->getById($classID);
-			if ($count >= $class[0]['numberStudent']) {
-				$full = true;
-			}
-			if ($checkPassword || $checkUsername || $checkEmail || $full) {
+
+			if ($checkPassword || $checkUsername || $checkEmail || $checkStudentCode || $fullClassName) {
 				$data['message'] = 'fail';
 				if ($checkPassword) {
 					$txtError = '2 mật khẩu không trùng khớp !';
@@ -622,13 +707,16 @@ class Home extends BaseController
 					$txtError = 'Đã có người đăng ký email này, vui lòng nhập tên email khác !';
 					array_push($data['error'], $txtError);
 				}
-				if ($full) {
-					$txtError = 'Lớp đã đầy!!!';
+				if ($checkStudentCode != 0) {
+					$txtError = 'Đã tồn tại mã sinh viên.';
+					array_push($data['error'], $txtError);
+				}
+				if ($fullClassName != "") {
+					$txtError = 'Lớp ' . $fullClassName . ' đã đầy.';
 					array_push($data['error'], $txtError);
 				}
 				return view('editStudent', $data);
 			}
-			var_dump($data_insert);
 			$newClass = $studentModel->save($data_insert);
 			if ($newClass > 0) {
 				return redirect()->to(base_url() . '/home/students');
@@ -636,7 +724,6 @@ class Home extends BaseController
 				echo '<script>alert("Đã xảy ra lỗi!!!");</script>';
 			}
 		}
-		var_dump($data_insert);
 
 		return view('editStudent', $data);
 	}
@@ -680,5 +767,21 @@ class Home extends BaseController
 			}
 		}
 		return view('editPhanQuyen');
+	}
+	public function getTeacherBySubject($tid = null)
+	{
+		$adminModel = new AdminModel();
+		$subjectModel = new SubjectModel();
+		$teacher = $adminModel->getById($tid);
+		$subIDS = unserialize($teacher[0]['subID']);
+		$subjects = [];
+		if (is_array($subIDS)) {
+			foreach ($subIDS as $key => $value) {
+				$subName = $subjectModel->getSubjectById($value)[0]['name'];
+				$subjects[$key] = $subName;
+			}
+		}
+		$json = json_encode($subjects);
+		return $json;
 	}
 }

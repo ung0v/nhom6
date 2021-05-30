@@ -15,21 +15,21 @@
     </div>
     <?php if (isset($teachers)) : ?>
         <div class=" form-group">
-            <label class="bold">Môn</label>
-            <select class="form-control first_null not_chosen" name="teacher">
-                <?php foreach ($subjects as $item) : ?>
+            <label class="bold">Người giảng dạy</label>
+            <select class="form-control first_null not_chosen" name="teacher" onchange="change(this.value)">
+                <option value="0">--- Chọn người giảng dạy ---</option>
+
+                <?php foreach ($teachers as $item) : ?>
                     <option value="<?= $item['id'] ?>"><?= $item['name'] ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
     <?php endif; ?>
-    <?php if (isset($teachers)) : ?>
+    <?php if (isset($subjects)) : ?>
         <div class=" form-group">
-            <label class="bold">Người giảng dạy</label>
-            <select class="form-control first_null not_chosen" name="teacher">
-                <?php foreach ($teachers as $item) : ?>
-                    <option value="<?= $item['id'] ?>"><?= $item['name'] ?></option>
-                <?php endforeach; ?>
+            <label class="bold">Môn</label>
+            <select id="teacher" class="form-control first_null not_chosen" name="subject">
+                <option value="0">--- Chọn môn ---</option>
             </select>
         </div>
     <?php endif; ?>
@@ -47,5 +47,19 @@
     </div>
 <?php endif; ?>
 </form>
+<script>
+    async function change(value) {
+        const res = await fetch(`http://localhost/nhom6/home/getTeacherBySubject/${value}`);
+        const data = await res.json();
+        let html = data.map(el => {
+            return `<option value="">${el}</option>`
+        })
+        if (!data.length) {
 
+            html = "<option value='0'>--- Chọn môn ---</option>";
+        }
+        const select = document.getElementById("teacher");
+        select.innerHTML = html;
+    }
+</script>
 <?= $this->endSection() ?>
