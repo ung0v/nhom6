@@ -40,7 +40,7 @@ class Home extends BaseController
 						foreach ($classIDS as $key2 => $classID) {
 							$subID = $classesModel->getById($classID)[0]["subID"];
 							$subName = $subjectModel->getSubjectById($subID)[0]["name"];
-							$grade = $markModel->getMarkByStudentIDAndSubID($sid, $subID)[0]["grade"];
+							$grade = $markModel->getMarkByStudentIDAndSubID($sid, $classID)[0]["grade"];
 							$markAr[$key2]["classID"] = $classID;
 							$markAr[$key2]["subID"] = $subID;
 							$markAr[$key2]["subName"] = $subName;
@@ -49,6 +49,7 @@ class Home extends BaseController
 					}
 				}
 				$data['mark'] = $mark;
+				// var_dump($markAr);
 				$data['markAr'] = $markAr;
 				return view('mark', $data);
 			}
@@ -777,21 +778,24 @@ class Home extends BaseController
 		}
 		return view('editPhanQuyen');
 	}
-	public function getTeacherBySubject($tid = null)
+	public function getTeacherBySubject($sid = null)
 	{
 		$adminModel = new AdminModel();
 		$subjectModel = new SubjectModel();
-		$teacher = $adminModel->getById($tid);
-		$subIDS = unserialize($teacher[0]['subID']);
-		$subjects = [];
-		if (is_array($subIDS)) {
-			foreach ($subIDS as $key => $value) {
-				$subName = $subjectModel->getSubjectById($value)[0]['name'];
-				$subjects[$key]["id"] = $value;
-				$subjects[$key]["subName"] = $subName;
+		$subID = $subjectModel->getSubjectById($sid);
+		$teachers = $adminModel->getAll();
+		$teachersBySubject = [];
+		foreach ($teachers as $key => $teacher) {
+			$subIDS = unserialize($teacher["subID"]);
+			if (is_array($subIDS)) {
+				foreach ($subIDS as $key2 => $subID) {
+					if ($subID == $sid) {
+						array_push($teachersBySubject, $teacher);
+					}
+				}
 			}
 		}
-		$json = json_encode($subjects);
+		$json = json_encode($teachersBySubject);
 		return $json;
 	}
 }

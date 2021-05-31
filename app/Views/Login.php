@@ -39,7 +39,7 @@
                                     <div class="text-center">
                                         <h1 class="h4 text-gray-900 mb-4">Hệ thống quản lý trường học</h1>
                                     </div>
-                                    <form method="POST" action="<?= base_url() . '/login' ?>" class="user">
+                                    <form method="POST" action="<?= base_url() . '/login/index' ?>" class="user">
 
                                         <div class="form-group">
                                             <input type="text" class="form-control form-control-user" id="username" name="username" aria-describedby="emailHelp" placeholder="Tên tài khoản">

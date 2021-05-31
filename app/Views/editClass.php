@@ -16,10 +16,10 @@
     <?php if (isset($teachers)) : ?>
         <div class=" form-group">
             <label class="bold">Người giảng dạy</label>
-            <select class="form-control first_null not_chosen" name="teacher" onchange="change(this.value)">
-                <option value="0">--- Chọn người giảng dạy ---</option>
+            <select class="form-control first_null not_chosen" name="subID" onchange="change(this.value)">
+                <option value="0">--- Chọn môn ---</option>
 
-                <?php foreach ($teachers as $item) : ?>
+                <?php foreach ($subjects as $item) : ?>
                     <option value="<?= $item['id'] ?>"><?= $item['name'] ?></option>
                 <?php endforeach; ?>
             </select>
@@ -28,8 +28,8 @@
     <?php if (isset($subjects)) : ?>
         <div class=" form-group">
             <label class="bold">Môn</label>
-            <select id="teacher" class="form-control first_null not_chosen" name="subID">
-                <option value="0">--- Chọn môn ---</option>
+            <select id="teacher" class="form-control first_null not_chosen" name="teacher">
+                <option value="0">--- Chọn giảng viên ---</option>
             </select>
         </div>
     <?php endif; ?>
@@ -52,7 +52,7 @@
         const res = await fetch(`http://localhost/nhom6/home/getTeacherBySubject/${value}`);
         const data = await res.json();
         let html = data.map(el => {
-            return `<option value="${el.id}">${el.subName}</option>`
+            return `<option value="${el.id}">${el.name}</option>`
         })
         if (!data.length) {
 
